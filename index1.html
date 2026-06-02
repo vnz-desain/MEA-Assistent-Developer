@@ -1,0 +1,187 @@
+<!DOCTYPE html><html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,
+               initial-scale=1.0,
+               viewport-fit=cover,
+               user-scalable=no"><title>MEA Assistant v6</title><link rel="stylesheet" href="style.css">
+</head><body class="mode-idle"><!-- BACKDROP --><div id="app-backdrop"></div><!-- SIDEBAR --><aside id="sidebar" class="sidebar-hidden"><div class="sidebar-header">
+    <h2>MEA Sessions</h2>
+
+    <button id="close-sidebar-btn">
+        ✕
+    </button>
+</div>
+
+<div id="history-container">
+
+    <div class="history-empty">
+        Belum ada riwayat
+    </div>
+
+</div>
+
+<div class="sidebar-footer">
+
+    <button id="clear-history-btn">
+        Hapus Semua
+    </button>
+
+</div>
+
+</aside><!-- MAIN APP --><div id="app-shell"><!-- NAVBAR -->
+<header id="topbar">
+
+    <button id="menu-btn" class="icon-btn">
+
+        <svg viewBox="0 0 24 24">
+            <path d="M4 6H20M4 12H20M4 18H20"/>
+        </svg>
+
+    </button>
+
+    <!-- SWIFT SLIDER -->
+    <div id="swift-control">
+
+        <div id="swift-indicator"></div>
+
+        <button class="swift-btn active"
+                data-mode="idle">
+            Idle
+        </button>
+
+        <button class="swift-btn"
+                data-mode="auto">
+            Auto
+        </button>
+
+        <button class="swift-btn"
+                data-mode="core">
+            Core
+        </button>
+
+    </div>
+
+    <button id="reset-btn">
+        Reset
+    </button>
+
+</header>
+
+<!-- CHAT -->
+<main id="chat-scroll">
+
+    <div id="chat-container">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen">
+
+            <div class="welcome-logo">
+                M
+            </div>
+
+            <h1>
+                MEA Assistant
+            </h1>
+
+            <p>
+                Sistem siap menerima instruksi.
+            </p>
+
+        </div>
+
+    </div>
+
+</main>
+
+<!-- LOADER -->
+<div id="loader-wrapper"
+     class="hidden">
+
+    <div id="loader-m">
+
+        <div class="loader-ring ring-1"></div>
+        <div class="loader-ring ring-2"></div>
+        <div class="loader-ring ring-3"></div>
+
+        <span>M</span>
+
+    </div>
+
+    <p id="loader-text">
+        Processing...
+    </p>
+
+</div>
+
+<!-- INPUT DOCK -->
+<footer id="bottom-dock">
+
+    <div id="input-shell">
+
+        <textarea
+            id="prompt-input"
+            rows="1"
+            maxlength="10000"
+            placeholder="Ketik instruksi untuk MEA Assistant..."></textarea>
+
+        <div id="input-actions">
+
+            <span id="credit-counter">
+                0 / 10.000
+            </span>
+
+            <button id="send-btn">
+
+                <svg viewBox="0 0 24 24">
+                    <path d="M22 2L11 13"/>
+                    <path d="M22 2L15 22L11 13L2 9L22 2Z"/>
+                </svg>
+
+            </button>
+
+        </div>
+
+    </div>
+
+    <div id="branding">
+        MEA Assistant v6
+    </div>
+
+</footer>
+
+</div><!-- TEMPLATE USER --><template id="user-message-template"><div class="message-row user-row">
+
+    <div class="message-bubble">
+
+        <div class="message-content"></div>
+
+    </div>
+
+</div>
+
+</template><!-- TEMPLATE ASSISTANT --><template id="assistant-message-template"><div class="message-row assistant-row">
+
+    <div class="message-bubble">
+
+        <div class="message-content"></div>
+
+        <div class="assistant-tools">
+
+            <button class="copy-btn">
+                Copy
+            </button>
+
+            <button class="download-btn">
+                Download
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+</template><script src="app.js"></script></body>
+</html>
