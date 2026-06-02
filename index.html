@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MEA Assistant Developer v5</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="grain" aria-hidden="true"></div>
+  <div class="orb" id="ambient-orb" aria-hidden="true"></div>
+
+  <nav id="navbar">
+    <div class="nav-left">
+      <span class="logo-icon">◈</span>
+      <span class="nav-brand">MEA Assistant Developer</span>
+    </div>
+    <div class="nav-right">
+      <a href="#" class="nav-link active" onclick="switchTab('chat')">Home</a>
+      <a href="#" class="nav-link" onclick="switchTab('knowledge')">Knowledge Folder</a>
+    </div>
+  </nav>
+
+  <header id="sub-header">
+    <div class="meta-info">
+      <span class="version-tag">SYSTEM V5.0</span>
+      <div class="mode-selector">
+        <button class="btn-mode active" id="mode-idle" onclick="setMode('idle')">IDLE</button>
+        <button class="btn-mode" id="mode-auto" onclick="setMode('auto')">AUTO</button>
+        <button class="btn-mode" id="mode-core" onclick="setMode('core')">CORE</button>
+      </div>
+    </div>
+    <div class="status-container">
+      <span class="status-text" id="status-label">SYSTEM READY</span>
+      <span class="status-dot dot--idle" id="status-dot"></span>
+    </div>
+  </header>
+
+  <main id="app-viewport">
+    
+    <div id="tab-chat" class="tab-content active-content">
+      <div id="chat-area" role="log" aria-live="polite"></div>
+
+      <div id="ai-process-indicator" class="hidden">
+        <span class="spinner"></span> <span id="process-text">Sedang menelusuri data...</span>
+      </div>
+
+      <div id="draft-panel" class="hidden">
+        <div class="panel-hdr">
+          <div class="panel-title">◈ PENDING ARCHIVE DRAFTS <span class="d-badge" id="draft-count">0</span></div>
+          <button class="btn-refresh" onclick="loadDrafts()">↻</button>
+        </div>
+        <div id="draft-list"></div>
+      </div>
+
+      <div id="input-container">
+        <div class="input-wrapper">
+          <textarea
+            id="question-input"
+            rows="1"
+            placeholder="Ketik instruksi... (Gunakan Mode CORE untuk bantuan arsitektur coding website)"
+            aria-label="Input pertanyaaan"
+          ></textarea>
+          <div class="input-meta-row">
+            <span class="credit-counter" id="credit-count">0 / 10,000 Credits Used</span>
+            <span class="hint-txt">Ctrl+Enter untuk kirim</span>
+          </div>
+        </div>
+        <button id="send-btn" onclick="sendMessage()">
+          <span class="btn-txt">EXECUTE</span><span class="btn-arr">→</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="tab-knowledge" class="tab-content hidden">
+      <div class="folder-view">
+        <h2 class="folder-title">📦 LOCAL DATABASE ARCHIVE</h2>
+        <p class="folder-desc">Data di bawah ini disinkronisasi langsung melalui Spreadsheet DB.</p>
+        <div class="table-container">
+          <table class="luxury-table">
+            <thead>
+              <tr>
+                <th>Topik / Komponen</th>
+                <th>Status Integrasi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Core Rules DNA</td>
+                <td><span class="badge badge--rule">Aktif Terkunci</span></td>
+              </tr>
+              <tr>
+                <td>System Log Module</td>
+                <td><span class="badge badge--search">Sinkron</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer id="license-footer">
+    <span>© 2026 MEA Studio Lab. Dark Cinematic Architecture Interface. All Rights Reserved.</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+      </html>
+      
