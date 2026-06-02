@@ -1,0 +1,208 @@
+/* ============================================================
+   MEA Assistant v5 — style.css
+   DNA: Dark Cinematic · Luxury · Bold Cyberpunk Minimalist
+============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Space+Mono:wght@400;700&display=swap');
+
+/* ── LAYOUT INITIALIZATION CONTROLS ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black:        #030303;
+  --black-soft:   #080808;
+  --black-card:   #0E0E0E;
+  --red-deep:     #7A0000;
+  --red-mid:      #9E1B1B;
+  --red-neon:     #D62246;
+  --red-glow:     rgba(214, 34, 70, 0.12);
+  --core-glow:    rgba(214, 34, 70, 0.25);
+  --white:        #F4F1EC;
+  --white-dim:    #A6A29A;
+  --white-faint:  #3D3C3A;
+  --border:       rgba(255, 255, 255, 0.05);
+  
+  --fd: 'Bebas Neue', sans-serif;
+  --fb: 'Cormorant Garamond', serif;
+  --fm: 'Space Mono', monospace;
+  --t-smooth: .25s cubic-bezier(.25, .46, .45, .94);
+}
+
+/* MENGIKAT TINGGI LAYAR AGAR TIDAK BISA DI-SCROLL LUAR */
+html, body {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  background: var(--black);
+  color: var(--white);
+  font-family: var(--fb);
+  font-size: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── GRAIN EFFECT & BACKGROUND AMBIENT ── */
+.grain {
+  position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: .025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: noiseMoving .15s steps(2) infinite;
+}
+@keyframes noiseMoving {
+  0% { transform: translate(0,0); } 50% { transform: translate(-1%,2%); }
+  100% { transform: translate(1%,-1%); }
+}
+
+.orb {
+  position: fixed; bottom: -150px; left: 50%; transform: translateX(-50%);
+  width: 650px; height: 350px; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(122,0,0,0.1) 0%, transparent 70%);
+  pointer-events: none; z-index: 0; transition: background var(--t-smooth);
+}
+
+/* INTERFACE CORE MODE PULSING EFFECT */
+body.core-active-mode .orb {
+  background: radial-gradient(ellipse, rgba(214,34,70,0.18) 0%, transparent 70%);
+}
+
+/* ── NAVIGATION BAR ── */
+#navbar {
+  height: 50px; border-bottom: 1px solid var(--border);
+  padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between;
+  background: rgba(3,3,3,0.95); z-index: 10; flex-shrink: 0;
+}
+.nav-left { display: flex; align-items: center; gap: 0.5rem; }
+.logo-icon { color: var(--red-neon); font-size: 0.9rem; animation: pulse 2s infinite; }
+.nav-brand { font-family: var(--fd); font-size: 1.3rem; letter-spacing: 0.15em; color: var(--white); }
+.nav-right { display: flex; gap: 1.5rem; }
+.nav-link {
+  font-family: var(--fm); font-size: 0.68rem; text-transform: uppercase;
+  color: var(--white-dim); text-decoration: none; letter-spacing: 0.1em; transition: color var(--t-smooth);
+}
+.nav-link:hover, .nav-link.active { color: var(--red-neon); }
+
+/* ── SUB HEADER CONTROL ── */
+#sub-header {
+  height: 44px; background: var(--black-soft); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; flex-shrink: 0;
+}
+.version-tag { font-family: var(--fm); font-size: 0.55rem; color: var(--white-faint); letter-spacing: 0.1em; }
+.mode-selector { display: inline-flex; background: #000; border: 1px solid var(--border); padding: 2px; margin-left: 1rem; }
+.btn-mode {
+  background: transparent; border: none; color: var(--white-dim); font-family: var(--fm);
+  font-size: 0.58rem; padding: 3px 10px; cursor: pointer; letter-spacing: 0.05em; transition: all var(--t-smooth);
+}
+.btn-mode:hover { color: var(--white); }
+.btn-mode.active { background: var(--red-deep); color: var(--white); }
+
+/* EFK ANIMASI DINAMIS UNTUK CORE MODE BUTTON */
+body.core-active-mode #mode-core {
+  background: var(--red-neon) !important;
+  box-shadow: 0 0 10px var(--core-glow);
+  text-shadow: 0 0 4px #fff;
+}
+
+.status-container { display: flex; align-items: center; gap: 0.5rem; }
+.status-text { font-family: var(--fm); font-size: 0.55rem; color: var(--white-dim); letter-spacing: 0.1em; }
+.dot { width: 6px; height: 6px; border-radius: 50%; }
+.dot--idle { background: var(--white-dim); }
+.dot--process { background: #E5A93C; animation: blink 0.8s infinite; }
+.dot--ok { background: #28A745; }
+
+/* ── VIEWPORT CONTAINER MAIN (TIDAK BOLEH SCROLL) ── */
+#app-viewport {
+  flex: 1; display: flex; flex-direction: column; min-height: 0;
+  width: 100%; max-width: 950px; margin: 0 auto; position: relative; z-index: 1;
+}
+.tab-content { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; }
+.hidden { display: none !important; }
+
+/* ── AREA CHAT DIBUAT INDEPENDENT SCROLLBAR ── */
+#chat-area {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 1.25rem;
+}
+#chat-area::-webkit-scrollbar { width: 2px; }
+#chat-area::-webkit-scrollbar-thumb { background: var(--red-deep); }
+
+/* MESSAGES STYLE ENGINE */
+.message { max-width: 85%; padding: 0.8rem 1.1rem; font-size: 0.94rem; line-height: 1.65; white-space: pre-wrap; word-break: break-word; }
+.message--user { align-self: flex-end; background: var(--red-deep); border-right: 2px solid var(--red-neon); text-align: left; }
+.message--assistant { align-self: flex-start; background: var(--black-card); border-left: 2px solid var(--red-mid); border-top: 1px solid var(--border); }
+.message--error { align-self: flex-start; background: rgba(122,0,0,0.15); border: 1px solid var(--red-neon); font-family: var(--fm); font-size: 0.75rem; color: #FFAAAA; }
+
+/* META CHAT BADGES */
+.msg-meta { margin-top: 0.5rem; display: flex; gap: 0.5rem; padding-top: 0.4rem; border-top: 1px solid var(--border); }
+.badge { font-family: var(--fm); font-size: 0.52rem; letter-spacing: 0.1em; padding: 1px 6px; border: 1px solid var(--border); text-transform: uppercase; }
+.badge--rule { color: #82B1FF; }
+.badge--search { color: #B2FF59; }
+.badge--gemini { color: #E040FB; }
+
+/* ── AI INDICATOR ENGINE ── */
+#ai-process-indicator { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 1rem; font-family: var(--fm); font-size: 0.68rem; color: var(--white-dim); }
+.spinner { width: 10px; height: 10px; border: 1px solid var(--white-dim); border-top-color: var(--red-neon); border-radius: 50%; animation: spin 0.6s linear infinite; }
+
+/* ── INPUT SYSTEM ACCENT FIXED BOTTOM ── */
+#input-container {
+  padding: 1rem; border-top: 1px solid var(--border);
+  background: var(--black); display: flex; gap: 1rem; align-items: flex-end; flex-shrink: 0;
+}
+.input-wrapper { flex: 1; display: flex; flex-direction: column; }
+textarea {
+  background: var(--black-card); border: 1px solid var(--border); border-bottom: 1px solid var(--red-mid);
+  color: var(--white); font-family: var(--fb); font-size: 0.95rem; padding: 0.7rem;
+  resize: none; outline: none; max-height: 90px; overflow-y: auto;
+}
+textarea:focus { border-color: var(--red-neon); }
+.input-meta-row { display: flex; justify-content: space-between; padding-top: 0.3rem; font-family: var(--fm); font-size: 0.52rem; color: var(--white-faint); }
+
+#send-btn {
+  background: transparent; border: 1px solid var(--red-neon); color: var(--white);
+  padding: 0.7rem 1.2rem; font-family: var(--fm); font-size: 0.65rem; letter-spacing: 0.1em;
+  cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: all var(--t-smooth);
+}
+#send-btn:hover { background: var(--red-neon); transform: translateY(-1px); }
+
+/* ── DRAFT PANEL ACCENT CONTROLS ── */
+#draft-panel { background: var(--black-soft); border: 1px solid var(--border); margin: 0 1rem; flex-shrink: 0; }
+.panel-hdr { display: flex; justify-content: space-between; padding: 0.4rem 0.8rem; background: #000; border-bottom: 1px solid var(--border); }
+.panel-title { font-family: var(--fm); font-size: 0.58rem; color: var(--red-neon); letter-spacing: 0.05em; }
+.d-badge { background: var(--red-neon); padding: 1px 4px; font-size: 0.5rem; color: #fff; }
+.btn-refresh { background: none; border: none; color: var(--white-faint); cursor: pointer; }
+#draft-list { max-height: 80px; overflow-y: auto; }
+.draft-item { display: flex; justify-content: space-between; padding: 0.4rem 0.8rem; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
+.btn-act { background: transparent; border: 1px solid var(--border); font-family: var(--fm); font-size: 0.5rem; color: var(--white); padding: 2px 6px; cursor: pointer; margin-left: 0.2rem; }
+.btn-act--ok { border-color: #28A745; color: #28A745; }
+.btn-act--no { border-color: var(--red-neon); color: var(--red-neon); }
+
+/* ── FOLDER VIEW CONTENT ── */
+.folder-view { padding: 2rem 1rem; overflow-y: auto; flex: 1; }
+.folder-title { font-family: var(--fd); font-size: 1.8rem; letter-spacing: 0.1em; color: var(--red-neon); }
+.folder-desc { font-style: italic; color: var(--white-dim); margin-bottom: 1.5rem; font-size: 0.9rem; }
+.table-container { width: 100%; overflow-x: auto; background: var(--black-card); border: 1px solid var(--border); }
+.luxury-table { width: 100%; border-collapse: collapse; font-family: var(--fm); font-size: 0.75rem; text-align: left; }
+.luxury-table th, .luxury-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+.luxury-table th { background: #000; color: var(--white-dim); font-weight: normal; }
+
+/* ── LICENSED FOOTER ── */
+#license-footer {
+  height: 24px; border-top: 1px solid var(--border); background: var(--black);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; z-index: 10;
+}
+#license-footer span { font-family: var(--fm); font-size: 0.52rem; color: var(--white-faint); letter-spacing: 0.05em; text-align: center; }
+
+/* ── KEYFRAMES ANIMASI ── */
+@keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+@keyframes pulse { 0%,100% { transform: scale(1); opacity:1; } 50% { transform: scale(1.1); opacity:0.7; } }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* ── RESPONSIVE RESPONSIVENESS ON MOBILE ── */
+@media (max-width: 600px) {
+  #navbar { padding: 0 1rem; }
+  .nav-brand { font-size: 1rem; }
+  #sub-header { padding: 0 1rem; }
+  .mode-selector { margin-left: 0.3rem; }
+  .btn-mode { padding: 3px 6px; font-size: 0.52rem; }
+  .message { max-width: 95%; font-size: 0.88rem; }
+  .hint-txt { display: none; }
+  }
+  
