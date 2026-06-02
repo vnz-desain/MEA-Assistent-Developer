@@ -1,207 +1,1342 @@
-// ============================================================
-// MEA UI v5.2 — Swift Controller Engine
-// ============================================================
+// ======================================================
+// MEA ASSISTANT V6
+// APP.JS PART 1
+// CORE INITIALIZATION ENGINE
+// ======================================================
 
-const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwgfTqS6lXwedsN7Q7RyJUzgQCJnIbB-ntM37P9JZHCGtrqErRx6yWgOhCXFUP5SjwD_g/exec';
+// ------------------------------------------------------
+// CONFIG
+// ------------------------------------------------------
+
+const BACKEND_URL =
+'PASTE_YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+
+const MAX_CREDITS = 10000;
+
+// ------------------------------------------------------
+// GLOBAL STATE
+// ------------------------------------------------------
 
 let currentMode = 'idle';
-let sessionHistoryId = 'session_' + new Date().getTime();
-let localHistoryMemory = [];
 
-document.addEventListener('DOMContentLoaded', () => {
-  const inputEl = document.getElementById('question-input');
-  
-  inputEl.addEventListener('input', () => {
-    let len = inputEl.value.length;
-    if (len > 10000) { inputEl.value = inputEl.value.substring(0, 10000); len = 10000; }
-    document.getElementById('credit-count').textContent = `${len.toLocaleString()} / 10K Credits`;
-    
-    inputEl.style.height = 'auto';
-    inputEl.style.height = Math.min(inputEl.scrollHeight, 110) + 'px';
-  });
+let sessionId =
+'session_' + Date.now();
 
-  inputEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      executePrompt();
+let localHistory = [];
+
+let isGenerating = false;
+
+// ------------------------------------------------------
+// DOM
+// ------------------------------------------------------
+
+const chatContainer =
+document.getElementById('chat-container');
+
+const textarea =
+document.getElementById('prompt-input');
+
+const sendBtn =
+document.getElementById('send-btn');
+
+const creditCounter =
+document.getElementById('credit-counter');
+
+const loader =
+document.getElementById('loader-wrapper');
+
+const sidebar =
+document.getElementById('sidebar');
+
+const menuBtn =
+document.getElementById('menu-btn');
+
+const closeSidebarBtn =
+document.getElementById('close-sidebar-btn');
+
+const resetBtn =
+document.getElementById('reset-btn');
+
+const historyContainer =
+document.getElementById('history-container');
+
+// ------------------------------------------------------
+// INIT
+// ------------------------------------------------------
+
+document.addEventListener(
+'DOMContentLoaded',
+initApplication
+);
+
+function initApplication(){
+
+initializeTextarea();
+
+initializeSidebar();
+
+initializeSwiftSlider();
+
+initializeReset();
+
+loadHistory();
+
+updateCreditCounter();
+
+hideLoader();
+
+console.log(
+    'MEA Assistant V6 Ready'
+);
+
+}
+
+// ------------------------------------------------------
+// TEXTAREA
+// ------------------------------------------------------
+
+function initializeTextarea(){
+
+textarea.addEventListener(
+    'input',
+    handleTextareaInput
+);
+
+textarea.addEventListener(
+    'keydown',
+    handleTextareaKeydown
+);
+
+}
+
+function handleTextareaInput(){
+
+autoResizeTextarea();
+
+updateCreditCounter();
+
+}
+
+function handleTextareaKeydown(e){
+
+if(
+    e.key === 'Enter'
+    &&
+    !e.shiftKey
+){
+
+    e.preventDefault();
+
+    executePrompt();
+}
+
+}
+
+function autoResizeTextarea(){
+
+textarea.style.height =
+'auto';
+
+textarea.style.height =
+Math.min(
+    textarea.scrollHeight,
+    160
+) + 'px';
+
+}
+
+function updateCreditCounter(){
+
+let len =
+textarea.value.length;
+
+if(len > MAX_CREDITS){
+
+    textarea.value =
+    textarea.value.substring(
+        0,
+        MAX_CREDITS
+    );
+
+    len =
+    MAX_CREDITS;
+}
+
+creditCounter.textContent =
+len.toLocaleString()
++
+' / '
++
+MAX_CREDITS.toLocaleString();
+
+}
+
+// ------------------------------------------------------
+// SIDEBAR
+// ------------------------------------------------------
+
+function initializeSidebar(){
+
+menuBtn.addEventListener(
+    'click',
+    openSidebar
+);
+
+closeSidebarBtn.addEventListener(
+    'click',
+    closeSidebar
+);
+
+}
+
+function openSidebar(){
+
+sidebar.classList.remove(
+    'sidebar-hidden'
+);
+
+}
+
+function closeSidebar(){
+
+sidebar.classList.add(
+    'sidebar-hidden'
+);
+
+}
+
+// ------------------------------------------------------
+// SWIFT SLIDER
+// ------------------------------------------------------
+
+function initializeSwiftSlider(){
+
+const buttons =
+document.querySelectorAll(
+    '.swift-btn'
+);
+
+const indicator =
+document.getElementById(
+    'swift-indicator'
+);
+
+buttons.forEach(
+    (button,index)=>{
+
+        button.addEventListener(
+            'click',
+            ()=>{
+
+                buttons.forEach(
+                    btn=>
+                    btn.classList.remove(
+                        'active'
+                    )
+                );
+
+                button.classList.add(
+                    'active'
+                );
+
+                currentMode =
+                button.dataset.mode;
+
+                moveIndicator(
+                    indicator,
+                    index
+                );
+
+                updateBodyMode(
+                    currentMode
+                );
+            }
+        );
     }
-  });
+);
 
-  renderChatRow('Sistem Mandiri MEA Terhubung. Layar dioptimalkan penuh.', 'assistant', 'rule');
-  loadDrafts();
+}
+
+function moveIndicator(
+indicator,
+index
+){
+
+const width =
+100 / 3;
+
+indicator.style.transform =
+`translateX(${width * index}%)`;
+
+}
+
+function updateBodyMode(
+mode
+){
+
+document.body.classList.remove(
+    'mode-idle',
+    'mode-auto',
+    'mode-core'
+);
+
+document.body.classList.add(
+    `mode-${mode}`
+);
+
+}
+
+// ------------------------------------------------------
+// LOADER
+// ------------------------------------------------------
+
+function showLoader(
+text='Processing...'
+){
+
+const loaderText =
+document.getElementById(
+    'loader-text'
+);
+
+loaderText.textContent =
+text;
+
+loader.classList.remove(
+    'hidden'
+);
+
+}
+
+function hideLoader(){
+
+loader.classList.add(
+    'hidden'
+);
+
+}
+
+// ------------------------------------------------------
+// AUTO SCROLL
+// ------------------------------------------------------
+
+function scrollToBottom(){
+
+requestAnimationFrame(()=>{
+
+    const container =
+    document.getElementById(
+        'chat-scroll'
+    );
+
+    container.scrollTop =
+    container.scrollHeight;
 });
 
-// ── NEW METHOD: SWIFT SLIDER CONTROL ──
-function swiftMode(mode, offsetPercent) {
-  currentMode = mode;
-  
-  // Geser background track slider secara mekanis & modern
-  document.getElementById('swift-track').style.transform = `translateX(${offsetPercent}%)`;
-  
-  // Ubah status tombol aktif
-  document.querySelectorAll('.swift-btn').forEach(btn => btn.classList.remove('active'));
-  event.target.classList.add('active');
-
-  // Suntik tema aura ke tubuh aplikasi
-  document.body.className = '';
-  document.body.classList.add(`mode-${mode}-active`);
 }
 
-function toggleSidebar() {
-  const sidebar = document.getElementById('sidebar-history');
-  sidebar.classList.toggle('sidebar-hidden');
-  if (!sidebar.classList.contains('sidebar-hidden')) renderSidebarList();
+// ------------------------------------------------------
+// HISTORY STORAGE
+// ------------------------------------------------------
+
+function saveHistory(){
+
+localStorage.setItem(
+    'mea_history',
+    JSON.stringify(
+        localHistory
+    )
+);
+
 }
 
-function pushToLocalHistory(prompt) {
-  const shortText = prompt.length > 24 ? prompt.substring(0, 24) + '...' : prompt;
-  localHistoryMemory.unshift({ id: 'hist_' + new Date().getTime(), text: shortText, fullText: prompt });
+function loadHistory(){
+
+try{
+
+    const data =
+    localStorage.getItem(
+        'mea_history'
+    );
+
+    if(!data) return;
+
+    localHistory =
+    JSON.parse(data);
+
+    renderHistory();
+
+}catch(err){
+
+    console.error(err);
 }
 
-function renderSidebarList() {
-  const container = document.getElementById('history-list-container');
-  if (!localHistoryMemory.length) {
-    container.innerHTML = `<div class="history-empty">Belum ada riwayat chat</div>`;
-    return;
-  }
-  container.innerHTML = localHistoryMemory.map(item => `
-    <div class="history-item" onclick="loadPastPrompt(\`${escapeHtml(item.fullText)}\`)">
-      <div class="history-text">${escapeHtml(item.text)}</div>
-      <button class="btn-del-single" onclick="deleteSingleHistoryItem(event, '${item.id}')">✕</button>
+}
+
+function addHistory(text){
+
+localHistory.unshift({
+
+    id:
+    'hist_' + Date.now(),
+
+    text
+});
+
+if(
+    localHistory.length > 50
+){
+
+    localHistory =
+    localHistory.slice(
+        0,
+        50
+    );
+}
+
+saveHistory();
+
+renderHistory();
+
+}
+
+function renderHistory(){
+
+if(
+    !localHistory.length
+){
+
+    historyContainer.innerHTML =
+    `
+    <div class="history-empty">
+        Belum ada riwayat
     </div>
-  `).join('');
+    `;
+
+    return;
 }
 
-function loadPastPrompt(fullText) {
-  document.getElementById('question-input').value = fullText;
-  document.getElementById('question-input').dispatchEvent(new Event('input'));
-  toggleSidebar();
+historyContainer.innerHTML =
+localHistory.map(item=>`
+
+    <div class="history-item">
+
+        ${escapeHtml(item.text)}
+
+    </div>
+
+`).join('');
+
 }
 
-function deleteSingleHistoryItem(event, itemId) {
-  event.stopPropagation();
-  localHistoryMemory = localHistoryMemory.filter(item => item.id !== itemId);
-  renderSidebarList();
+// ------------------------------------------------------
+// ESCAPE HTML
+// ------------------------------------------------------
+
+function escapeHtml(text){
+
+const div =
+document.createElement('div');
+
+div.textContent =
+text;
+
+return div.innerHTML;
+
 }
 
-function clearAllHistoryFromDB() {
-  if (confirm("Kosongkan semua sesi saat ini?")) {
-    localHistoryMemory = [];
-    renderSidebarList();
-    toggleSidebar();
-  }
+// ======================================================
+// MEA ASSISTANT V6
+// APP.JS PART 2
+// CHAT RENDER ENGINE
+// ======================================================
+
+// ------------------------------------------------------
+// TEMPLATES
+// ------------------------------------------------------
+
+const userTemplate =
+document.getElementById(
+'user-message-template'
+);
+
+const assistantTemplate =
+document.getElementById(
+'assistant-message-template'
+);
+
+// ------------------------------------------------------
+// WELCOME SCREEN
+// ------------------------------------------------------
+
+function removeWelcomeScreen(){
+
+const welcome =
+document.getElementById(
+    'welcome-screen'
+);
+
+if(welcome){
+
+    welcome.remove();
 }
 
-function resetToHome() {
-  document.getElementById('chat-dynamic-wall').innerHTML = '';
-  renderChatRow('Sistem dibersihkan. Sesi dimulai kembali.', 'assistant', 'rule');
 }
 
-async function executePrompt() {
-  const input = document.getElementById('question-input');
-  const sendBtn = document.getElementById('execute-btn');
-  const prompt = input.value.trim();
+// ------------------------------------------------------
+// USER MESSAGE
+// ------------------------------------------------------
 
-  if (!prompt) return;
+function renderUserMessage(text){
 
-  renderChatRow(prompt, 'user');
-  pushToLocalHistory(prompt);
-  input.value = '';
-  input.style.height = 'auto';
-  document.getElementById('credit-count').textContent = `0 / 10K Credits`;
+removeWelcomeScreen();
 
-  sendBtn.disabled = true;
-  toggleToastIndicator(true, currentMode === 'idle' ? 'Scanning DB...' : 'Invoking MEA AI Core...');
+const clone =
+userTemplate.content.cloneNode(
+    true
+);
 
-  try {
-    const data = await postTransaction({
-      action: 'chat', question: prompt, mode: currentMode, historyId: sessionHistoryId
-    });
+clone.querySelector(
+    '.message-content'
+).textContent = text;
 
-    if (data.error) {
-      renderChatRow('❌ Error: ' + data.error, 'error');
-    } else {
-      renderChatRow(data.answer, 'assistant', data.source, data.contextUsed);
-      if (data.draftCreated) await loadDrafts();
+chatContainer.appendChild(
+    clone
+);
+
+scrollToBottom();
+
+}
+
+// ------------------------------------------------------
+// ASSISTANT MESSAGE
+// ------------------------------------------------------
+
+function renderAssistantMessage(
+text
+){
+
+removeWelcomeScreen();
+
+const clone =
+assistantTemplate.content.cloneNode(
+    true
+);
+
+const bubble =
+clone.querySelector(
+    '.message-content'
+);
+
+bubble.textContent = text;
+
+chatContainer.appendChild(
+    clone
+);
+
+initializeAssistantButtons();
+
+scrollToBottom();
+
+}
+
+// ------------------------------------------------------
+// ASSISTANT MESSAGE WITH TYPING
+// ------------------------------------------------------
+
+async function renderAssistantTyping(
+
+text,
+
+speed = 8
+
+){
+
+removeWelcomeScreen();
+
+const clone =
+assistantTemplate.content.cloneNode(
+    true
+);
+
+const bubble =
+clone.querySelector(
+    '.message-content'
+);
+
+bubble.textContent = '';
+
+chatContainer.appendChild(
+    clone
+);
+
+scrollToBottom();
+
+let current = '';
+
+for(
+
+    let i = 0;
+
+    i < text.length;
+
+    i++
+
+){
+
+    current += text[i];
+
+    bubble.textContent =
+    current;
+
+    if(i % 3 === 0){
+
+        scrollToBottom();
     }
-  } catch (err) {
-    renderChatRow('❌ Connection Timeout', 'error');
-  } finally {
-    sendBtn.disabled = false;
-    toggleToastIndicator(false);
+
+    await delay(speed);
+}
+
+initializeAssistantButtons();
+
+}
+
+// ------------------------------------------------------
+// TYPEWRITER FAST
+// ------------------------------------------------------
+
+async function renderAssistantTypingSmart(
+text
+){
+
+const length =
+text.length;
+
+let speed = 8;
+
+if(length > 500){
+
+    speed = 4;
+}
+
+if(length > 1000){
+
+    speed = 2;
+}
+
+await renderAssistantTyping(
+    text,
+    speed
+);
+
+}
+
+// ------------------------------------------------------
+// COPY BUTTON
+// ------------------------------------------------------
+
+function initializeAssistantButtons(){
+
+const copyButtons =
+document.querySelectorAll(
+    '.copy-btn'
+);
+
+copyButtons.forEach(btn=>{
+
+    if(
+        btn.dataset.bound
+    ) return;
+
+    btn.dataset.bound =
+    'true';
+
+    btn.addEventListener(
+        'click',
+        handleCopy
+    );
+});
+
+const downloadButtons =
+document.querySelectorAll(
+    '.download-btn'
+);
+
+downloadButtons.forEach(btn=>{
+
+    if(
+        btn.dataset.bound
+    ) return;
+
+    btn.dataset.bound =
+    'true';
+
+    btn.addEventListener(
+        'click',
+        handleDownload
+    );
+});
+
+}
+
+// ------------------------------------------------------
+// COPY
+// ------------------------------------------------------
+
+async function handleCopy(e){
+
+try{
+
+    const row =
+    e.target.closest(
+        '.assistant-row'
+    );
+
+    const text =
+    row.querySelector(
+        '.message-content'
+    ).innerText;
+
+    await navigator.clipboard.writeText(
+        text
+    );
+
+    const original =
+    e.target.textContent;
+
+    e.target.textContent =
+    'Copied';
+
+    setTimeout(()=>{
+
+        e.target.textContent =
+        original;
+
+    },1500);
+
+}catch(err){
+
+    console.error(err);
+}
+
+}
+
+// ------------------------------------------------------
+// DOWNLOAD TXT
+// ------------------------------------------------------
+
+function handleDownload(e){
+
+const row =
+e.target.closest(
+    '.assistant-row'
+);
+
+const text =
+row.querySelector(
+    '.message-content'
+).innerText;
+
+const blob =
+new Blob(
+
+    [text],
+
+    {
+        type:
+        'text/plain'
+    }
+
+);
+
+const url =
+URL.createObjectURL(
+    blob
+);
+
+const a =
+document.createElement(
+    'a'
+);
+
+a.href =
+url;
+
+a.download =
+'MEA_Response.txt';
+
+document.body.appendChild(
+    a
+);
+
+a.click();
+
+a.remove();
+
+URL.revokeObjectURL(
+    url
+);
+
+}
+
+// ------------------------------------------------------
+// SYSTEM MESSAGE
+// ------------------------------------------------------
+
+function renderSystemMessage(
+text
+){
+
+const div =
+document.createElement(
+    'div'
+);
+
+div.className =
+'message-row assistant-row';
+
+div.innerHTML =
+`
+<div class="message-bubble">
+
+    <div class="message-content">
+
+        ${escapeHtml(text)}
+
+    </div>
+
+</div>
+`;
+
+chatContainer.appendChild(
+    div
+);
+
+scrollToBottom();
+
+}
+
+// ------------------------------------------------------
+// ERROR MESSAGE
+// ------------------------------------------------------
+
+function renderErrorMessage(
+text
+){
+
+const div =
+document.createElement(
+    'div'
+);
+
+div.className =
+'message-row assistant-row';
+
+div.innerHTML =
+`
+<div class="message-bubble">
+
+    <div
+    style="
+    color:#ff6b63;
+    ">
+
+    ${escapeHtml(text)}
+
+    </div>
+
+</div>
+`;
+
+chatContainer.appendChild(
+    div
+);
+
+scrollToBottom();
+
+}
+
+// ------------------------------------------------------
+// MESSAGE ANIMATION
+// ------------------------------------------------------
+
+function animateLatestMessage(){
+
+const messages =
+document.querySelectorAll(
+    '.message-row'
+);
+
+const latest =
+messages[
+    messages.length - 1
+];
+
+if(!latest) return;
+
+latest.animate(
+
+    [
+
+        {
+            opacity:0,
+            transform:
+            'translateY(10px)'
+        },
+
+        {
+            opacity:1,
+            transform:
+            'translateY(0)'
+        }
+
+    ],
+
+    {
+
+        duration:250,
+        easing:'ease-out'
+    }
+);
+
+}
+
+// ------------------------------------------------------
+// DELAY
+// ------------------------------------------------------
+
+function delay(ms){
+
+return new Promise(
+
+    resolve=>{
+
+        setTimeout(
+            resolve,
+            ms
+        );
+    }
+
+);
+
   }
+// ======================================================
+// MEA ASSISTANT V6
+// APP.JS PART 3
+// BACKEND ENGINE
+// ======================================================
+
+// ------------------------------------------------------
+// SEND BUTTON
+// ------------------------------------------------------
+
+sendBtn.addEventListener(
+'click',
+executePrompt
+);
+
+// ------------------------------------------------------
+// EXECUTE PROMPT
+// ------------------------------------------------------
+
+async function executePrompt(){
+
+if(isGenerating) return;
+
+const prompt =
+textarea.value.trim();
+
+if(!prompt) return;
+
+isGenerating = true;
+
+sendBtn.disabled = true;
+
+renderUserMessage(
+    prompt
+);
+
+addHistory(
+    prompt
+);
+
+textarea.value = '';
+
+autoResizeTextarea();
+
+updateCreditCounter();
+
+showLoader(
+    'MEA Processing...'
+);
+
+try{
+
+    const response =
+    await sendToBackend(
+        prompt
+    );
+
+    hideLoader();
+
+    await renderAssistantTypingSmart(
+        response
+    );
+
+}catch(error){
+
+    hideLoader();
+
+    renderErrorMessage(
+
+        'Koneksi gagal atau server tidak merespons.'
+
+    );
+
+    console.error(
+        error
+    );
 }
 
-function renderChatRow(text, speaker, source, context) {
-  const area = document.getElementById('chat-dynamic-wall');
-  const row = document.createElement('div');
-  row.className = `message-row ${speaker}-row`;
+sendBtn.disabled = false;
 
-  const speakerLabel = speaker === 'user' ? 'You' : 'MEA Assistant';
-  let htmlContent = escapeHtml(String(text || ''))
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/`([^`\n]+)`/g, '<code>$1</code>');
+isGenerating = false;
 
-  if (speaker === 'assistant' && source) {
-    const srcLabels = { rule: 'DNA', search: 'Local DB', gemini: 'Gemini Engine' };
-    htmlContent += `<div class="msg-meta-bar">
-      <span class="badge-src">${srcLabels[source] || source}</span>
-    </div>`;
-  }
-
-  row.innerHTML = `<div class="msg-speaker">${speakerLabel}</div><div class="msg-bubble">${htmlContent}</div>`;
-  area.appendChild(row);
-  
-  // Auto-scroll area dalam secara presisi
-  const scroller = document.getElementById('chat-scroll-area');
-  requestAnimationFrame(() => { scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' }); });
 }
 
-async function loadDrafts() {
-  try {
-    const res = await postTransaction({ action: 'drafts' });
-    const panel = document.getElementById('draft-floating-panel');
-    const rowsContainer = document.getElementById('draft-item-rows');
-    const count = document.getElementById('draft-count');
+// ------------------------------------------------------
+// SEND TO BACKEND
+// ------------------------------------------------------
 
-    if (!res.drafts || !res.drafts.length) { panel.classList.add('panel-hidden'); return; }
+async function sendToBackend(
+prompt
+){
 
-    count.textContent = res.drafts.length;
-    panel.classList.remove('panel-hidden');
-    rowsContainer.innerHTML = res.drafts.map(d => `
-      <div class="draft-row-item">
-        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:55%">${escapeHtml(d.title)}</div>
-        <div>
-          <button class="draft-btn" onclick="actDraft('approve','${d.id}')" style="color:#34C759;">Approve</button>
-          <button class="draft-btn" onclick="actDraft('reject','${d.id}')" style="color:#FF3B30;">Reject</button>
-        </div>
-      </div>
-    `).join('');
-  } catch (e) {}
+const payload = {
+
+    action:
+    'chat',
+
+    question:
+    prompt,
+
+    mode:
+    currentMode,
+
+    historyId:
+    sessionId
+};
+
+const response =
+await fetch(
+
+    BACKEND_URL,
+
+    {
+
+        method:'POST',
+
+        headers:{
+            'Content-Type':
+            'application/json'
+        },
+
+        body:
+        JSON.stringify(
+            payload
+        )
+    }
+
+);
+
+if(
+    !response.ok
+){
+
+    throw new Error(
+        'HTTP Error'
+    );
 }
 
-async function actDraft(action, id) {
-  try {
-    const res = await postTransaction({ action: action, draftId: id });
-    renderChatRow(res.answer || 'Draft updated.', 'assistant', 'rule');
-    await loadDrafts();
-  } catch (err) {}
+const data =
+await response.json();
+
+if(
+    data.error
+){
+
+    throw new Error(
+        data.error
+    );
 }
 
-async function postTransaction(payload) {
-  const r = await fetch(BACKEND_URL, {
-    method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload)
-  });
-  return r.json();
+return (
+
+    data.answer ||
+
+    data.response ||
+
+    'Tidak ada respons.'
+);
+
 }
 
-function toggleToastIndicator(show, text = '') {
-  const toast = document.getElementById('process-toast');
-  const txt = document.getElementById('process-toast-text');
-  if (show) { toast.classList.remove('toast-hidden'); txt.textContent = text; }
-  else { toast.classList.add('toast-hidden'); }
+// ------------------------------------------------------
+// RESET CHAT
+// ------------------------------------------------------
+
+function initializeReset(){
+
+resetBtn.addEventListener(
+
+    'click',
+
+    resetConversation
+);
+
 }
 
-function escapeHtml(s) {
-  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                                             }
+function resetConversation(){
+
+const confirmed =
+confirm(
+
+    'Mulai sesi baru?'
+
+);
+
+if(!confirmed)
+return;
+
+sessionId =
+'session_' +
+Date.now();
+
+chatContainer.innerHTML =
+
+`
+<div id="welcome-screen">
+
+    <div class="welcome-logo">
+        M
+    </div>
+
+    <h1>
+        MEA Assistant
+    </h1>
+
+    <p>
+        Sistem siap menerima instruksi.
+    </p>
+
+</div>
+`;
+
+}
+
+// ------------------------------------------------------
+// CLEAR HISTORY
+// ------------------------------------------------------
+
+const clearHistoryBtn =
+document.getElementById(
+'clear-history-btn'
+);
+
+if(clearHistoryBtn){
+
+clearHistoryBtn.addEventListener(
+
+    'click',
+
+    clearHistory
+);
+
+}
+
+function clearHistory(){
+
+const confirmed =
+confirm(
+    'Hapus semua riwayat?'
+);
+
+if(!confirmed)
+return;
+
+localHistory = [];
+
+saveHistory();
+
+renderHistory();
+
+}
+
+// ------------------------------------------------------
+// TIMEOUT FETCH
+// ------------------------------------------------------
+
+async function fetchWithTimeout(
+
+url,
+
+options = {},
+
+timeout = 45000
+
+){
+
+const controller =
+new AbortController();
+
+const timer =
+setTimeout(
+
+    ()=>{
+
+        controller.abort();
+
+    },
+
+    timeout
+);
+
+try{
+
+    const response =
+    await fetch(
+
+        url,
+
+        {
+
+            ...options,
+
+            signal:
+            controller.signal
+        }
+
+    );
+
+    clearTimeout(
+        timer
+    );
+
+    return response;
+
+}catch(err){
+
+    clearTimeout(
+        timer
+    );
+
+    throw err;
+}
+
+}
+
+// ------------------------------------------------------
+// IMPROVED BACKEND REQUEST
+// ------------------------------------------------------
+
+async function sendToBackendSafe(
+prompt
+){
+
+const payload = {
+
+    action:
+    'chat',
+
+    question:
+    prompt,
+
+    mode:
+    currentMode,
+
+    historyId:
+    sessionId
+};
+
+const response =
+await fetchWithTimeout(
+
+    BACKEND_URL,
+
+    {
+
+        method:'POST',
+
+        headers:{
+
+            'Content-Type':
+            'application/json'
+        },
+
+        body:
+        JSON.stringify(
+            payload
+        )
+    },
+
+    45000
+);
+
+const data =
+await response.json();
+
+return (
+
+    data.answer ||
+
+    data.response ||
+
+    'Tidak ada jawaban.'
+);
+
+}
+
+// ------------------------------------------------------
+// AUTO SCROLL OBSERVER
+// ------------------------------------------------------
+
+const observer =
+new MutationObserver(
+
+()=>{
+
+    scrollToBottom();
+}
+
+);
+
+observer.observe(
+
+chatContainer,
+
+{
+
+    childList:true,
+
+    subtree:true
+}
+
+);
+
+// ------------------------------------------------------
+// STARTUP MESSAGE
+// ------------------------------------------------------
+
+setTimeout(
+
+()=>{
+
+    console.log(
+        'MEA Ready'
+    );
+
+},
+
+500
+
+);
