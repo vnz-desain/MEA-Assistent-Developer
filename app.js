@@ -1,224 +1,246 @@
 // ============================================================
-// MEA Assistant v5 — app.js Execution Engine
+// MEA Assistant v5 — app.js Modern Execution Engine
 // ============================================================
 
 const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwgfTqS6lXwedsN7Q7RyJUzgQCJnIbB-ntM37P9JZHCGtrqErRx6yWgOhCXFUP5SjwD_g/exec';
 
 let currentMode = 'idle';
-let chatHistoryId = 'session_' + new Date().getTime();
+let sessionHistoryId = 'session_' + new Date().getTime();
+let localHistoryMemory = []; // Menyimpan history lokal untuk dirender di sidebar
 
-// ── UTURAN AMBANG COMPRESSION INPUT (10,000 CREDITS MAX) ──
-const MAX_INPUT_LIMIT = 10000;
-
-// ── INITIALIZATION ON SYSTEM LOAD ──
 document.addEventListener('DOMContentLoaded', () => {
   const inputEl = document.getElementById('question-input');
   
-  // Realtime Character/Credit Counter
+  // Realtime Character Counter
   inputEl.addEventListener('input', () => {
     let len = inputEl.value.length;
-    if (len > MAX_INPUT_LIMIT) {
-      inputEl.value = inputEl.value.substring(0, MAX_INPUT_LIMIT);
-      len = MAX_INPUT_LIMIT;
+    if (len > 10000) {
+      inputEl.value = inputEl.value.substring(0, 10000);
+      len = 10000;
     }
-    document.getElementById('credit-count').textContent = `${len.toLocaleString()} / 10,000 Credits Used`;
+    document.getElementById('credit-count').textContent = `${len.toLocaleString()} / 10,000 Credits`;
+    
+    // Auto grow height textarea minimalis
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
   });
 
-  // Ctrl + Enter interceptor execution
+  // Interseptor Ctrl+Enter
   inputEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && e.ctrlKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      executePrompt();
     }
   });
 
-  // Welcome Announcement
-  appendMessageRender('Sistem Mandiri MEA Assistant v5 Terhubung 🚀\nMode Default saat ini: **IDLE** (Penelusuran basis data lokal tanpa konsumsi token AI).\n\nPilih Mode **CORE** di sub-header untuk bantuan pengembangan komprehensif website.', 'assistant', 'rule');
-  
-  // Ambil Draft Awal
+  // Welcome Response
+  renderChatRow('Sistem Mandiri MEA Terhubung. Siap mengoptimalkan kode arsitektur website.', 'assistant', 'rule');
   loadDrafts();
-  setInterval(loadDrafts, 45000); // Sinkronisasi otomatis berkala tiap 45 detik
 });
 
-// ── MODE SWITCH CONTROL SYSTEM ──
-function setMode(mode) {
+// ── ENGINE MODE CONTROLLER (MENGATUR TRANSFER BODY AURA) ──
+function changeSystemMode(mode) {
   currentMode = mode;
-  document.querySelectorAll('.btn-mode').forEach(btn => btn.classList.remove('active'));
-  document.getElementById(`mode-${mode}`).classList.add('active');
-  
-  // Update Body Theme Modifier for Core Mode Glow Effects
-  if (mode === 'core') {
-    document.body.classList.add('core-active-mode');
-    setStatusVisual('idle', 'CORE SYSTEM ACTIVE');
-  } else {
-    document.body.classList.remove('core-active-mode');
-    setStatusVisual('idle', 'SYSTEM READY');
+  document.querySelectorAll('.mode-pill').forEach(p => p.classList.remove('active'));
+  document.getElementById(`pill-${mode}`).classList.add('active');
+
+  // Bersihkan kelas body penampung aura
+  document.body.className = '';
+  document.body.classList.add(`mode-${mode}-active`);
+}
+
+// ── SIDEBAR FUNCTIONAL ENGINE ──
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar-history');
+  sidebar.classList.toggle('sidebar-hidden');
+  if (!sidebar.classList.contains('sidebar-hidden')) {
+    renderSidebarList();
   }
 }
 
-// ── TAB LAYOUT ROTATION NAVIGATION ──
-function switchTab(targetTab) {
-  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-  
-  if (targetTab === 'chat') {
-    document.querySelector("onclick*='chat'").classList.add('active'); // Fallback safe
-    document.getElementById('tab-chat').classList.remove('hidden');
-  } else {
-    document.getElementById('tab-knowledge').classList.remove('hidden');
-  }
-  event.target.classList.add('active');
+// ── MANAJEMEN RIWAYAT CHAT LOKAL ──
+function pushToLocalHistory(prompt) {
+  const shortText = prompt.length > 30 ? prompt.substring(0, 30) + '...' : prompt;
+  localHistoryMemory.unshift({
+    id: 'hist_' + new Date().getTime(),
+    text: shortText,
+    fullText: prompt
+  });
 }
 
-// ── MESSAGE EXECUTION TRANSACTIONS ──
-async function sendMessage() {
+function renderSidebarList() {
+  const container = document.getElementById('history-list-container');
+  if (localHistoryMemory.length === 0) {
+    container.innerHTML = `<div class="history-empty">Belum ada riwayat chat</div>`;
+    return;
+  }
+
+  container.innerHTML = localHistoryMemory.map(item => `
+    <div class="history-item" onclick="loadPastPrompt(\`${escapeHtml(item.fullText)}\`)">
+      <div class="history-text">${escapeHtml(item.text)}</div>
+      <button class="btn-del-single" onclick="deleteSingleHistoryItem(event, '${item.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+function loadPastPrompt(fullText) {
+  document.getElementById('question-input').value = fullText;
+  document.getElementById('question-input').dispatchEvent(new Event('input'));
+  toggleSidebar();
+}
+
+function deleteSingleHistoryItem(event, itemId) {
+  event.stopPropagation(); // Mencegah loadPastPrompt terpicu
+  localHistoryMemory = localHistoryMemory.filter(item => item.id !== itemId);
+  renderSidebarList();
+}
+
+function clearAllHistoryFromDB() {
+  if (confirm("Hapus seluruh jejak riwayat chat dari antarmuka?")) {
+    localHistoryMemory = [];
+    renderSidebarList();
+    renderChatRow("🧹 Seluruh riwayat sesi lokal dibersihkan.", "assistant", "rule");
+    toggleSidebar();
+  }
+}
+
+function resetToHome() {
+  document.getElementById('chat-container-minimal').innerHTML = '';
+  renderChatRow('Sistem di-reset. Workspace bersih kembali.', 'assistant', 'rule');
+}
+
+// ── TRANSAKSI EKSEKUSI PROMPT ──
+async function executePrompt() {
   const input = document.getElementById('question-input');
-  const sendBtn = document.getElementById('send-btn');
+  const sendBtn = document.getElementById('execute-btn');
   const prompt = input.value.trim();
-  
+
   if (!prompt) return;
 
-  // Render teks ke layar obrolan lokal
-  appendMessageRender(prompt, 'user');
+  renderChatRow(prompt, 'user');
+  pushToLocalHistory(prompt);
   input.value = '';
-  document.getElementById('credit-count').textContent = `0 / 10,000 Credits Used`;
-  
+  input.style.height = 'auto';
+  document.getElementById('credit-count').textContent = `0 / 10,000 Credits`;
+
   sendBtn.disabled = true;
-  setIndicatorState(true, currentMode === 'idle' ? 'Scanning Local Database...' : 'Core Engine Analysing Stack...');
-  setStatusVisual('process', 'PROCESSING');
+  toggleToastIndicator(true, currentMode === 'idle' ? 'Scanning Sheet KB...' : 'Invoking Claude-Level Gemini Brain...');
 
   try {
-    const res = await apiPostTransaction({
+    const data = await postTransaction({
       action: 'chat',
       question: prompt,
       mode: currentMode,
-      historyId: chatHistoryId
+      historyId: sessionHistoryId
     });
 
-    if (res.error) {
-      appendMessageRender('❌ Gagal Memproses: ' + res.error, 'error');
-      setStatusVisual('idle', 'ERROR STATE');
+    if (data.error) {
+      renderChatRow('❌ Transaction Error: ' + data.error, 'error');
     } else {
-      appendMessageRender(res.answer, 'assistant', res.source, res.contextUsed);
-      if (res.draftCreated) await loadDrafts();
-      setStatusVisual('ok', 'TRANSACTION SUCCESS');
-      setTimeout(() => setStatusVisual('idle', currentMode === 'core' ? 'CORE SYSTEM ACTIVE' : 'SYSTEM READY'), 1500);
+      renderChatRow(data.answer, 'assistant', data.source, data.contextUsed);
+      if (data.draftCreated) await loadDrafts();
     }
   } catch (err) {
-    appendMessageRender('❌ Jaringan Terputus: ' + err.message, 'error');
-    setStatusVisual('idle', 'NETWORK FAIL');
+    renderChatRow('❌ Fatal Connection Timeout: ' + err.message, 'error');
   } finally {
     sendBtn.disabled = false;
-    setIndicatorState(false);
+    toggleToastIndicator(false);
   }
 }
 
-// ── PENDING DRAFTS ENGINE INTEGRATION ──
-async function loadDrafts() {
-  try {
-    const res = await apiPostTransaction({ action: 'drafts' });
-    const panel = document.getElementById('draft-panel');
-    const list = document.getElementById('draft-list');
-    const countBadge = document.getElementById('draft-count');
+// ── PARSER RENDERING ROW MINIMALIS ──
+function renderChatRow(text, speaker, source, context) {
+  const area = document.getElementById('chat-container-minimal');
+  const row = document.createElement('div');
+  row.className = `message-row ${speaker}-row`;
 
-    if (!res.drafts || !res.drafts.length) {
-      panel.classList.add('hidden');
-      return;
-    }
-
-    countBadge.textContent = res.drafts.length;
-    panel.classList.remove('hidden');
-
-    list.innerHTML = res.drafts.map(d => `
-      <div class="draft-item">
-        <div class="d-info"><strong>${escapeHtmlEntities(d.title)}</strong> (${d.id})</div>
-        <div class="d-actions">
-          <button class="btn-act btn-act--ok" onclick="executeDraftAction('approve','${d.id}')">APPROVE</button>
-          <button class="btn-act btn-act--no" onclick="executeDraftAction('reject','${d.id}')">REJECT</button>
-        </div>
-      </div>
-    `).join('');
-  } catch (e) {
-    console.error('DraftSyncError:', e);
-  }
-}
-
-async function executeDraftAction(action, draftId) {
-  setStatusVisual('process', 'UPDATING DB');
-  try {
-    const res = await apiPostTransaction({ action: action, draftId: draftId });
-    appendMessageRender(res.answer || '✅ Selesai memperbarui arsip.', 'assistant', 'rule');
-    await loadDrafts();
-  } catch(err) {
-    appendMessageRender('❌ Gagal eksekusi: ' + err.message, 'error');
-  } finally {
-    setStatusVisual('idle', 'SYSTEM READY');
-  }
-}
-
-// ── RENDER ENGINE & MARKDOWN PARSER LUXURY MINIMALIST ──
-function appendMessageRender(text, type, source, contextArray) {
-  const area = document.getElementById('chat-area');
-  const div = document.createElement('div');
-  div.className = `message message--${type}`;
-
-  // Pembersihan & Pengubahan Karakter Khusus Regulasi Markdown
-  let html = escapeHtmlEntities(String(text || ''))
+  const speakerLabel = speaker === 'user' ? 'You' : 'MEA Assistant';
+  
+  let htmlContent = escapeHtml(String(text || ''))
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/`([^`\n]+)`/g, '<code>$1</code>');
 
-  if (type === 'assistant' && source) {
-    const labels = { rule: 'DNA CONFIG', search: 'LOCAL SPREADSHEET', gemini: 'GEMINI AI THREAD' };
-    const ctxString = contextArray && contextArray.length ? ' dari: ' + contextArray.join(' · ') : '';
-    html += `<div class="msg-meta">
-      <span class="badge badge--${source}">${labels[source] || source}</span>
-      <span style="font-size:0.52rem; color:#666;">${escapeHtmlEntities(ctxString)}</span>
+  if (speaker === 'assistant' && source) {
+    const srcLabels = { rule: 'DNA Config', search: 'Spreadsheet DB', gemini: 'Gemini Engine' };
+    const ctxTxt = context && context.length ? ' via ' + context.join(' · ') : '';
+    htmlContent += `<div class="msg-meta-bar">
+      <span class="badge-src">${srcLabels[source] || source}</span>
+      <span style="color:#444;">${escapeHtml(ctxTxt)}</span>
     </div>`;
   }
 
-  div.innerHTML = html;
-  area.appendChild(div);
+  row.innerHTML = `
+    <div class="msg-speaker">${speakerLabel}</div>
+    <div class="msg-bubble">${htmlContent}</div>
+  `;
+
+  area.appendChild(row);
   
-  // Auto Scroll Stabilizer smooth 1 layar
+  // Auto scroll halus ke bawah khusus pada area chat scroller
+  const scroller = document.getElementById('chat-scroller');
   requestAnimationFrame(() => {
-    area.scrollTo({ top: area.scrollHeight, behavior: 'smooth' });
+    scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' });
   });
 }
 
-// ── AJAX POST TRANSACTION HELPER SAFE FROM CORS PREFLIGHT ──
-async function apiPostTransaction(payload) {
-  // Menggunakan text/plain agar browser tidak mengirimkan preflight OPTIONS request
-  const response = await fetch(BACKEND_URL, {
+// ── DRAFT ENGINE AGGREGATOR ──
+async function loadDrafts() {
+  try {
+    const res = await postTransaction({ action: 'drafts' });
+    const panel = document.getElementById('draft-floating-panel');
+    const rowsContainer = document.getElementById('draft-item-rows');
+    const count = document.getElementById('draft-count');
+
+    if (!res.drafts || !res.drafts.length) {
+      panel.classList.add('panel-hidden');
+      return;
+    }
+
+    count.textContent = res.drafts.length;
+    panel.classList.remove('panel-hidden');
+
+    rowsContainer.innerHTML = res.drafts.map(d => `
+      <div class="draft-row-item">
+        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60%">${escapeHtml(d.title)}</div>
+        <div>
+          <button class="draft-btn" onclick="actDraft('approve','${d.id}')" style="color:#28A745;">Approve</button>
+          <button class="draft-btn" onclick="actDraft('reject','${d.id}')" style="color:#E53935;">Reject</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) { console.log(e); }
+}
+
+async function actDraft(action, id) {
+  try {
+    const res = await postTransaction({ action: action, draftId: id });
+    renderChatRow(res.answer || 'Draft Updated.', 'assistant', 'rule');
+    await loadDrafts();
+  } catch (err) { renderChatRow('❌ Update Failed', 'error'); }
+}
+
+// ── CORE UTILITIES ──
+async function postTransaction(payload) {
+  const r = await fetch(BACKEND_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify(payload)
   });
-  if (!response.ok) throw new Error('Network status fault code: ' + response.status);
-  return response.json();
+  return r.json();
 }
 
-// ── INTERFACE STATUS VISUAL STATE CONTROL ──
-function setStatusVisual(state, labelString) {
-  const dot = document.getElementById('status-dot');
-  const lbl = document.getElementById('status-label');
-  if (dot) dot.className = 'dot dot--' + state;
-  if (lbl) lbl.textContent = labelString.toUpperCase();
-}
-
-function setIndicatorState(show, textStr = '') {
-  const ind = document.getElementById('ai-process-indicator');
-  const txt = document.getElementById('process-text');
+function toggleToastIndicator(show, text = '') {
+  const toast = document.getElementById('process-toast');
+  const txt = document.getElementById('process-toast-text');
   if (show) {
-    ind.classList.remove('hidden');
-    txt.textContent = textStr;
+    toast.classList.remove('toast-hidden');
+    txt.textContent = text;
   } else {
-    ind.classList.add('hidden');
+    toast.classList.add('toast-hidden');
   }
 }
 
-function escapeHtmlEntities(string) {
-  return String(string || '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-      }
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
     
